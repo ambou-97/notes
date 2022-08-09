@@ -1,4 +1,185 @@
-TID: [-1234] [] [2022-07-27 09:58:15,160] ERROR {org.wso2.carbon.apimgt.impl.utils.APIUtil} - Error occurred while trying to retrieve the event publisher for type: NOTIFICATION
+name: wso2.am
 
+# ws:9099
+# wss:8099
 
-TID: [-1234] [api/am/devportal] [2022-07-26 17:07:17,249] ERROR {org.wso2.carbon.apimgt.rest.api.util.exception.GlobalThrowableMapper} - Key Mappings already exists for application NewApp
+{{ $entrypoint := file "bin/wso2server.sh" }}
+{{ $offset := minus .Desc.Ports.http 9443 }}
+{{ $profile := "gateway-worker" }}
+
+scripts:
+  start: ["{{ $entrypoint }}", "-Dprofile={{ $profile }}"]
+  bootstrap:
+    - '{{ file "bin/profileSetup.sh" }} -Dprofile={{ $profile  }}'
+
+healthcheck:
+  url: ":{{ plus 8243 $offset }}" # Pass-through HTTPS Listener
+  times: 40
+  statuses: [ 200 ]
+  https: true
+
+# ------------------------------------------------------------------------------
+files:
+  - path: {{ file "repository/conf/deployment.toml" }}
+    content: |
+      [server]
+      hostname = "{{ default .Desc.Config.address .Node.Hostname }}"
+      node_ip = "{{ .Node.Ip }}"
+      server_role = "{{ $profile }}"
+      offset = {{ $offset }}
+
+      {{- if gt .Desc.Config.proxy_port 0 }}
+      [transport.https.properties]
+      proxyPort = {{ .Desc.Config.proxy_port }}
+      {{- end }}
+
+      [user_store]
+      type = "database"
+
+      [apim.key_manager]
+      service_url = "{{ .Desc.Config.idp_url }}/services/"
+      username = "{{ .Desc.Config.admin_username }}"
+      password = "{{ .Desc.Config.admin_password }}"
+
+      [super_admin]
+      username = "{{ .Desc.Config.admin_username }}"
+      password = "{{ .Desc.Config.admin_password }}"
+      create_admin_account = true
+
+      [database.shared_db]
+      type = "RDBMS"
+      driver = "org.postgresql.Driver"
+      validationQuery = "SELECT 1"
+      {{- with (parseDatabaseUrl .Desc.Config.db_shared_url) }}
+      url = "jdbc:postgresql://{{ .Host }}/{{ .Dbname  }}?sslmode={{ .Sslmode }}&amp;currentSchema={{ .Schema }}"
+      username = "{{ .User }}"
+      password = "{{ .Password }}"
+      {{- end }}
+
+      [encryption]
+      key = "CryptoService.Secret"
+
+      [apim.throttling]
+      enable_unlimited_tier = true
+      enable_header_based_throttling = false
+      enable_jwt_claim_based_throttling = false
+      enable_query_param_based_throttling = false
+      enable_decision_connection = false
+      enable_data_publishing = false
+      enable_policy_deploy = false
+
+      [apim.cache.gateway_token]
+      enable = false
+
+      [apim.cache.resource]
+      enable = false
+      
+      [apim.oauth_config]
+      remove_outbound_auth_header = true
+      auth_header = "Authorization"
+      {{- if .Desc.Config.white_listed_scopes }}
+      white_listed_scopes = [
+          "^device_.*", 
+          "openid"{{ range $index, $scope := .Desc.Config.white_listed_scopes }},
+          "{{ $scope }}"
+          {{- end }}
+      ]
+      {{- end }}
+
+      [apim.jwt]
+      enable = true
+      encoding = "{{ .Desc.Config.jwt_encoding }}" # base64,base64url
+      generator_impl = "{{ .Desc.Config.jwt_generator }}" 
+      claim_dialect = "http://wso2.org/oidc/claim"
+      header = "X-JWT-Assertion"
+      signing_algorithm = "SHA256withRSA"
+      enable_user_claims = true
+      claims_extractor_impl = "org.wso2.carbon.apimgt.impl.token.DefaultClaimsRetriever"
+      
+      [message_builder]    
+      multipart_form_data = "org.apache.axis2.builder.MultipartFormDataBuilder"
+      [message_formatter]
+      multipart_form_data = "org.apache.axis2.transport.http.MultipartFormDataFormatter"
+
+      
+      {{- if .Desc.Config.jwt_issuers }}
+      {{ range $index, $issuer := .Desc.Config.jwt_issuers }}
+      [[apim.jwt.issuer]]
+      name = "{{ $issuer.name }}"
+      jwks.url = "{{ $issuer.jwks_url }}"
+      {{- end }}
+      {{- end }}
+
+      [apim.cors]
+      allow_origins = "*"
+      allow_methods = ["GET","PUT","POST","DELETE","PATCH","OPTIONS", "HEAD"]
+      allow_headers = [
+         "authorization",
+         "Access-Control-Allow-Origin",
+         "Content-Type",
+         "traceparent",
+         "Accept",
+         "Accept-encoding",
+         "Access-Control-Allow-Credentials",
+         "Access-Control-Allow-Headers",
+         "Access-Control-Allow-Methods",
+         "Access-Control-Allow-Origin",
+         "Access-Control-Request-Headers",
+         "Access-Control-Request-Method",
+         "Authorization",
+         "Content-Length",
+         "Content-Security-Policy",
+         "Content-Type",
+         "Origin",
+         "Referrer-Policy",
+         "Strict-Transport-Security",
+         "X-Requested-With",
+         "X-Forwarded-Proto",
+         "X-Forwarded-Prefix",
+         "X-Forwarded-Host",
+         "Host",
+         "X-Forwarded-*",
+         "X-Xss-Protection",
+         "X-Frame-Options",
+         "X-Content-Type-Options",
+         "X-Download-Options",
+         "X-Permitted-Cross-Domain-Policies",
+
+         "X-App",
+         "X-Application",
+         "X-ApplicationName",
+         "X-TenantID",
+         "X-Tenant-Id",
+         "X-Entity-Id",
+         "X-Request-Id",
+         "X-RequestId",
+         "X-EntityID",
+         "X-CorrelationID",
+         "X-Correlation-Id",
+         "X-Transaction-Token",
+         "X-Transaction-Hash",
+         "X-UNB-Transaction-Token",
+         "X-OperationId",
+         "X-UNB-Transition-Hash",
+         "X-UNB-User-SecretKey",
+         "SSL-CLIENT-CERT"
+      ]
+      allow_credentials = false
+      
+      [apimgt.mutual_ssl]
+      certificate_header = "SSL-CLIENT-CERT"
+      enable_client_validation = true
+      client_certificate_encode = true
+
+      [carbon_health_check]
+      enable = true
+
+      [carbon_health_check.health_checker.data_source_health_checker.properties]
+      'monitored.datasources' = "jdbc/WSO2CarbonDB,jdbc/SHARED_DB"
+
+{{- with .Desc.Config.trust_certificates}}
+truststore:
+  path: {{ file "repository/resources/security/client-truststore.jks" }}
+  password: wso2carbon
+  imports: {{ json .}}
+{{- end }}
