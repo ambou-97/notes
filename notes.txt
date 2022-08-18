@@ -1,1 +1,66 @@
-https://teams.microsoft.com/l/meetup-join/19%3ameeting_OTU1ODg0ZTMtZDU0My00Y2IwLWIzOTItNGYwZTYzMTA5OTQ1%40thread.v2/0?context=%7b%22Tid%22%3a%22a491f8c5-c721-4e53-b604-6f27e7e4565d%22%2c%22Oid%22%3a%22871d6597-ea06-4e8b-ac52-2872fb0f797b%22%7d
+USER GUIDE WSO2:
+Le Plan:
+1. KIARA, infrastructure d'essai
+- Pourquoi KIARA?
+- Architecture de KIARA
+- Annuaires des @ IP
+2. Ce qu'il faut savoir dans Oracle Cloud
+- Découverte de Oracle Cloud (parcours de connexion)
+- Voir les VM créées
+- Comment provisionner une VM
+- Comment se connecter via ssh à une VM ?
+- Les étapes nécessaires pour ouvrir un port
+- Les ports à ouvrir nécessairement
+3. Organisation Github de l'équipe
+- Introduction sur les différents repositories
+- Comprendre les rôles ansible de WSO2 (APIM, IS)
+4. La VM "xsf-artéfact"
+- Se connecter via FileZilla
+- Uploader un document
+- Downloader un artéfact via une URL
+- Mettre à jour un artéfact
+5. La mise en place de la base de données Postgre
+- Mise en place de la BD avec Docker
+- Création des schémas avec Liquibase
+6. Déploiement avec Jenkins
+- exemple de création d'un- job (la pipeline)
+- lancer job
+7. Les issues
+Ansible.cfg  désactiver la vérification des clés
+Dans les deployment.toml des composants de l’APIM, désactiver le grant type du token-exchange car ce grant type n’est pas supporté par l’IS.
+
+
+
+1.	KIARA, une infrastructure d'essai
+Introduction 
+Le film de Roi Lion de Disney nous aide à mieux saisir le choix du nom KIARA pour l’infrastructure d’essai pour la migration vers SIMBA2020 des composants WSO2.
+Kiara est une protagoniste de la série de long-métrages Le Roi Lion, et la principale protagoniste du film Le Roi Lion 2 : L'Honneur de la Tribu, sorti en 1998. Elle est la fille de Simba et Nala, ainsi, elle est donc la princesse et future reine de la Terre des Lions.
+L’infrastructure KIARA déployé sur Oracle Cloud est donc les prémices de la migration vers la nouvelle infrastructure et servira éventuellement de test à l’avenir.
+Pourquoi KIARA?
+Provisionner ou tester une nouvelle infrastructure sur les ressources de la SGABS n’est pas recommandé pour diverses raisons :
+-	Premièrement, c’est décourageant lorsqu’on n’a pas les autorisations nécessaires pour accéder aux ressources de déploiement
+-	Deuxièmement, l’infrastructure de la Société Générale est très complexe comme un environnement de test
+-	Enfin, beaucoup de jobs sont lancés quotidiennement ce qui rend leur exécution parfois lente.
+C’est pour pallier à tous ces problèmes que nous avons fait recours à Oracle Cloud qui nous offre plus de liberté, de flexibilité et de rapidité.
+Cependant, KIARA a été conçue pour être la plus proche possible des infrastructures de la Société Générale.
+Architecture de KIARA (à faire)
+Annuaires des VM
+Nom Composant	Composition	URL
+Management-plane (4.1.0)	Publisher + DevPortal	https://168.138.91.243:9443
+Control-plane (4.1.0)	Traffic-manager	https://168.138.89.205:9443
+	Key Manager	https://168.138.89.205:9444
+Idp (5.11)	Identity Server	https://168.138.70.107:9443
+Gateway (4.1.0)	Gateway	https://168.138.78.217:9443
+Pgaas	Postgres (Docker, Liquibase)	
+Controller (Ansible)	Jenkins	
+
+
+
+2. Ce qu'il faut savoir dans Oracle Cloud
+- Découverte de Oracle Cloud (parcours de connexion)
+- Voir les VM créées
+- Comment provisionner une VM
+- Comment se connecter via ssh à une VM ?
+- Les étapes nécessaires pour ouvrir un port
+- Les ports à ouvrir nécessairement
+
