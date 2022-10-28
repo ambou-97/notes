@@ -55,6 +55,8 @@ Pgaas	Postgres (Docker, Liquibase)
 Controller (Ansible)	Jenkins	
 
 
+https://drive.google.com/file/d/1zV1pM2cvxPV8pO5fkkx914aCc_y6Z1zN/view?usp=sharing
+
 
 2. Ce qu'il faut savoir dans Oracle Cloud
 - Découverte de Oracle Cloud (parcours de connexion)
