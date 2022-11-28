@@ -65,6 +65,8 @@ https://drive.google.com/file/d/1EJzr8zTqgza6LHor7CeVGXOGVUurL8dX/view?usp=shari
 
 https://drive.google.com/file/d/1kvv2VfSQXUfXfpHggH8oNYgbIj8R-WMQ/view?usp=sharing
 
+https://drive.google.com/file/d/1SE1-5luz52-XgH2EdgPLJp7uHzluxwoU/view?usp=sharing
+
 2. Ce qu'il faut savoir dans Oracle Cloud
 - Découverte de Oracle Cloud (parcours de connexion)
 - Voir les VM créées
